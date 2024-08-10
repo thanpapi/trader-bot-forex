@@ -26,7 +26,7 @@ class Config:
     TAKE_PROFIT_PIPS = 50000 # Ajustado a pips para hacer el % en una operación
     STOP_LOSS_PIPS = 25000 # Ajustado a pips para mantener el stop loss en línea con el take profit
     MAX_OPERATIONS =  8 # aqui van los numeros de operaciones 
-    MAX_LOT_SIZE = 0.02 #LOTES
+    MAX_LOT_SIZE = 1 #LOTES
 
 
     # ["BTCUSD"] SOLO FINES DE SEMANA TEMP 4H/15M
@@ -34,7 +34,7 @@ class Config:
     # ["USDJPY", "AUDUSD", "NZDJPY", "AUDJPY"] PARES 8PM/10PM asia 
     # Lista de símbolos Forex (sin criptomonedas) 
      # ["XAUUSD"]
-    SYMBOLS_FOREX = ["BTCUSD"]
+    SYMBOLS_FOREX = ["BTCUSDm"]
     # Periodo para el cálculo de la media móvil simple (SMA)
     SMA_PERIOD = 20
     
@@ -45,7 +45,7 @@ class Config:
     MAX_RISK_PERCENTAGE = 50  # Alineado con el objetivo de ganancia del 10%
     
     # Balance inicial de la cuenta (en unidades monetarias de la cuenta)
-    INITIAL_BALANCE = 10000 
+    INITIAL_BALANCE = 10000000
     
     # Deslizamiento permitido (en pips)
     SLIPPAGE = 0  # Configurado para permitir hasta 10 pips de deslizamiento en las órdenes
