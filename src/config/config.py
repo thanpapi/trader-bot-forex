@@ -23,10 +23,10 @@ class Config:
 
 
     #parametros para operar
-    TAKE_PROFIT_PIPS = 50000 # Ajustado a pips para hacer el % en una operación
-    STOP_LOSS_PIPS = 25000 # Ajustado a pips para mantener el stop loss en línea con el take profit
-    MAX_OPERATIONS =  8 # aqui van los numeros de operaciones 
-    MAX_LOT_SIZE = 1 #LOTES
+    TAKE_PROFIT_PIPS = 80 # Ajustado a pips para hacer el % en una operación
+    STOP_LOSS_PIPS = 200 # Ajustado a pips para mantener el stop loss en línea con el take profit
+    MAX_OPERATIONS =  5 # aqui van los numeros de operaciones 
+    MAX_LOT_SIZE = 0.2 #LOTES
 
 
     # ["BTCUSD"] SOLO FINES DE SEMANA TEMP 4H/15M
@@ -34,24 +34,25 @@ class Config:
     # ["USDJPY", "AUDUSD", "NZDJPY", "AUDJPY"] PARES 8PM/10PM asia 
     # Lista de símbolos Forex (sin criptomonedas) 
      # ["XAUUSD"]
-    SYMBOLS_FOREX = ["BTCUSDm"]
+    SYMBOLS_FOREX = ["EURUSD"] 
     # Periodo para el cálculo de la media móvil simple (SMA)
-    SMA_PERIOD = 20
+    SMA_PERIOD = 50
     
     # Periodo para la identificación de soportes y resistencias
-    SUPPORT_RESISTANCE_PERIOD = 20
+    SUPPORT_RESISTANCE_PERIOD = 40
    
     # Porcentaje máximo de riesgo en comparación con el balance de la cuenta (en total)
     MAX_RISK_PERCENTAGE = 50  # Alineado con el objetivo de ganancia del 10%
     
     # Balance inicial de la cuenta (en unidades monetarias de la cuenta)
-    INITIAL_BALANCE = 10000000
+    INITIAL_BALANCE = 10150 
     
     # Deslizamiento permitido (en pips)
     SLIPPAGE = 0  # Configurado para permitir hasta 10 pips de deslizamiento en las órdenes
-    FIBONACCI_THRESHOLD = 20
+    
 
-   
+    SUPPORT_RESISTANCE_PERIOD = 40
+    SMA_PERIOD = 50
     
     
     

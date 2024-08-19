@@ -59,49 +59,44 @@ class Strategy:
                 print(f"Bot running, balance={balance}")
                 all_symbols = self.config.SYMBOLS_FOREX
                 for symbol in all_symbols:
-
-                    higher_timeframe_data = self.data_fetcher.get_historical_data(symbol, mt5.TIMEFRAME_H1)
-                    intermediate_timeframe_data = self.data_fetcher.get_historical_data(symbol, mt5.TIMEFRAME_M15)
+                    
+                    higher_timeframe_data = self.data_fetcher.get_historical_data(symbol, mt5.TIMEFRAME_M15)
                     lower_timeframe_data = self.data_fetcher.get_historical_data(symbol, mt5.TIMEFRAME_M3)
 
-                    if higher_timeframe_data.empty or intermediate_timeframe_data.empty or lower_timeframe_data.empty:
+                    if higher_timeframe_data.empty or lower_timeframe_data.empty:
                         print(f"Skipping {symbol} due to empty data.")
                         continue
 
                     min_required_length = max(self.config.SMA_PERIOD, self.config.SUPPORT_RESISTANCE_PERIOD)
-                    if len(higher_timeframe_data) < min_required_length or len(intermediate_timeframe_data) < min_required_length or len(lower_timeframe_data) < min_required_length:
-                        print(f"Skipping {symbol} due to insufficient data.")
+                    if len(higher_timeframe_data) < min_required_length:
+                        print(f"Skipping {symbol} due to insufficient higher timeframe data.")
+                        continue
+
+                    if len(lower_timeframe_data) < min_required_length:
+                        print(f"Skipping {symbol} due to insufficient lower timeframe data.")
                         continue
 
                     higher_timeframe_data['close'] = higher_timeframe_data['close'].astype(float)
-                    intermediate_timeframe_data['close'] = intermediate_timeframe_data['close'].astype(float)
                     lower_timeframe_data['close'] = lower_timeframe_data['close'].astype(float)
 
-                    # Indicadores en la temporalidad mayor (H1)
+                    # Indicadores en la temporalidad mayor 
                     higher_timeframe_data['sma'] = higher_timeframe_data['close'].rolling(window=self.config.SMA_PERIOD).mean()
-                    higher_timeframe_data['rsi'] = self.calculate_rsi(higher_timeframe_data, 14)
                     higher_timeframe_data['macd'], higher_timeframe_data['macd_signal'], higher_timeframe_data['macd_hist'] = self.calculate_macd(higher_timeframe_data)
 
-                    # Indicadores en la temporalidad intermedia (M5)
-                    intermediate_timeframe_data['sma'] = intermediate_timeframe_data['close'].rolling(window=self.config.SMA_PERIOD).mean()
-                    intermediate_timeframe_data['rsi'] = self.calculate_rsi(intermediate_timeframe_data, 14)
-                    intermediate_timeframe_data['macd'], intermediate_timeframe_data['macd_signal'], intermediate_timeframe_data['macd_hist'] = self.calculate_macd(intermediate_timeframe_data)
-
-                    # Identificación de Order Blocks en la temporalidad intermedia (M5)
-                    order_blocks = self.identify_order_blocks(intermediate_timeframe_data)
-
-                    # Indicadores en la temporalidad menor (M3)
+                    # Indicadores en la temporalidad menor 
                     lower_timeframe_data['sma'] = lower_timeframe_data['close'].rolling(window=self.config.SMA_PERIOD).mean()
-                    lower_timeframe_data['rsi'] = self.calculate_rsi(lower_timeframe_data, 14)
                     lower_timeframe_data['macd'], lower_timeframe_data['macd_signal'], lower_timeframe_data['macd_hist'] = self.calculate_macd(lower_timeframe_data)
 
-                    # Señales en la temporalidad mayor (H1)
+                    # Identificación de Order Blocks en la temporalidad menor
+                    order_blocks = self.identify_order_blocks(lower_timeframe_data)
+
+                    # Señales en la temporalidad mayor 
                     higher_timeframe_signal = (higher_timeframe_data['close'].iloc[-1] > higher_timeframe_data['sma'].iloc[-1]) and (higher_timeframe_data['macd_hist'].iloc[-1] > 0)
 
-                    # Señales en la temporalidad menor (M3)
+                    # Señales en la temporalidad menor 
                     lower_timeframe_signal = (lower_timeframe_data['close'].iloc[-1] > lower_timeframe_data['sma'].iloc[-1]) and (lower_timeframe_data['macd_hist'].iloc[-1] > 0)
 
-                    # Confirmación de la señal con Order Block en M5
+                    # Confirmación de la señal con Order Block
                     valid_order_block = False
                     for block_price, block_type in order_blocks:
                         if block_type == 'bullish' and lower_timeframe_data['close'].iloc[-1] > block_price:
@@ -111,24 +106,19 @@ class Strategy:
                             valid_order_block = True
                             break
 
-                    # Verificar sobrecompra/sobreventa antes de tomar la entrada
-                    is_overbought = lower_timeframe_data['rsi'].iloc[-1] > 70
-                    is_oversold = lower_timeframe_data['rsi'].iloc[-1] < 30
-
                     signal = None
                     order_type = None
                     stop_loss = None
 
+                    # Decisiones basadas en ambas temporalidades y la validación del Order Block
                     if higher_timeframe_signal and lower_timeframe_signal and valid_order_block:
-                        if not is_overbought:  # Evitar compra en sobrecompra
-                            signal = True
-                            order_type = mt5.ORDER_TYPE_BUY
-                            stop_loss = lower_timeframe_data['close'].iloc[-1] - (self.config.STOP_LOSS_PIPS * mt5.symbol_info(symbol).point)
+                        signal = True
+                        order_type = mt5.ORDER_TYPE_BUY
+                        stop_loss = lower_timeframe_data['close'].iloc[-1] - (self.config.STOP_LOSS_PIPS * mt5.symbol_info(symbol).point)
                     elif not higher_timeframe_signal and not lower_timeframe_signal and valid_order_block:
-                        if not is_oversold:  # Evitar venta en sobreventa
-                            signal = True
-                            order_type = mt5.ORDER_TYPE_SELL
-                            stop_loss = lower_timeframe_data['close'].iloc[-1] + (self.config.STOP_LOSS_PIPS * mt5.symbol_info(symbol).point)
+                        signal = True
+                        order_type = mt5.ORDER_TYPE_SELL
+                        stop_loss = lower_timeframe_data['close'].iloc[-1] + (self.config.STOP_LOSS_PIPS * mt5.symbol_info(symbol).point)
 
                     if signal and not self.is_symbol_in_opposite_direction(symbol, order_type):
                         price = lower_timeframe_data['close'].iloc[-1]
@@ -151,7 +141,7 @@ class Strategy:
                             print(f"Order failed for {symbol}, retcode={result.retcode}, comment={result.comment}")
                         else:
                             print(f"Order placed successfully for {symbol}")
-
+                            
                             # Enviar mensaje a Telegram
                             message = (f"Abrir operación para {symbol}:\n"
                                        f"Precio de Entrada alrededor de: {price}\n"
@@ -170,7 +160,7 @@ class Strategy:
                                 print(f"Target number of operations reached: {self.operations_count}, stopping the bot.")
                                 return
 
-                time.sleep(2)
+                time.sleep(3)
             else:
                 print("Market is closed. Waiting...")
                 time.sleep(3600)
